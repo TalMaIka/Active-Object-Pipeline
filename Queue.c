@@ -4,7 +4,6 @@
 #include <pthread.h>
 #include <unistd.h>
 
-// Queue in a multithreaded environment including mutexes and condition variables
 typedef struct Queue {
     void** ptr;
     int size;
@@ -16,7 +15,7 @@ typedef struct Queue {
 
 Queue* queueInit() {
     Queue* q = malloc(sizeof(Queue));
-    q->ptr = malloc(sizeof(void*)*0);
+    q->ptr = malloc(sizeof(void*) * 5);
     q->size = 0;
     q->front = 0;
     q->rear = 0;
@@ -28,18 +27,16 @@ Queue* queueInit() {
 void queueDelete(Queue* q) {
     pthread_mutex_destroy(&q->mutex);
     pthread_cond_destroy(&q->cond);
-    for (int i = 0; i < q->size; i++){
-        free(q->ptr[i]);
-    }   
     free(q->ptr);
     free(q);
 }
 
 void queueEnqueue(Queue* q, void* in) {
     pthread_mutex_lock(&q->mutex);
-    q->ptr = realloc(q->ptr, sizeof(void*)*(q->size+1));
-    q->ptr[q->rear] = malloc(sizeof(void*));
-    memcpy(q->ptr[q->rear], in, sizeof(void*));
+    if (q->size == q->rear) {
+        q->ptr = realloc(q->ptr, sizeof(void*) * (q->size+1));
+    }
+    q->ptr[q->rear] = in;
     q->rear++;
     q->size++;
     pthread_cond_signal(&q->cond);
@@ -54,7 +51,8 @@ void* queueDequeue(Queue* q) {
         pthread_cond_wait(&q->cond, &q->mutex);
     }
     void* out = q->ptr[q->front];
-    q->front++;
+    memmove(&q->ptr[q->front], &q->ptr[q->front + 1], sizeof(void*) * (q->rear - q->front - 1));
+    q->rear--;
     q->size--;
     pthread_mutex_unlock(&q->mutex);
     return out;
@@ -63,12 +61,12 @@ void* queueDequeue(Queue* q) {
 void* producer(void* arg) {
     Queue* q = (Queue*)arg;
     int i;
-    for (i = 0; i < 5; i++) {
+    for (i = 0; i < 20; i++) {
         int* data = malloc(sizeof(int));
         *data = i;
         queueEnqueue(q, data);
         printf("Produced: %d\n", *data);
-        sleep(1);  // Simulate some processing time
+        sleep(1);
     }
     return NULL;
 }
@@ -76,33 +74,30 @@ void* producer(void* arg) {
 void* consumer(void* arg) {
     Queue* q = (Queue*)arg;
     int i;
-    for (i = 0; i < 5; i++) {
+    for (i = 0; i < 20; i++) {
         int* data = (int*)queueDequeue(q);
         printf("Consumed: %d\n", *data);
         free(data);
-        sleep(1);  // Simulate some processing time
+        sleep(1);
     }
     return NULL;
 }
 
 int main() {
-    Queue* q = queueInit(10);
+    Queue* q = queueInit();
 
     pthread_t producerThread, consumerThread;
 
-    // Create producer thread
     if (pthread_create(&producerThread, NULL, producer, (void*)q) != 0) {
         fprintf(stderr, "Failed to create producer thread\n");
         return 1;
     }
 
-    // Create consumer thread
     if (pthread_create(&consumerThread, NULL, consumer, (void*)q) != 0) {
         fprintf(stderr, "Failed to create consumer thread\n");
         return 1;
     }
 
-    // Wait for both threads to finish
     pthread_join(producerThread, NULL);
     pthread_join(consumerThread, NULL);
 
@@ -110,4 +105,3 @@ int main() {
 
     return 0;
 }
-
