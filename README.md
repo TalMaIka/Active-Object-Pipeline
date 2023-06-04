@@ -1,4 +1,3 @@
-README: ActiveObject and Pipeline
 
 # st_pipeline
 
