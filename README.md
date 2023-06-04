@@ -30,7 +30,7 @@ This command will compile the source files and create an executable named `st_pi
 To execute the st_pipeline program, use the following command in the terminal:
 
 ```
-$ ./st_pipeline <num_of_tasks> [<random_seed>]
+$ ./st_pipeline <num_of_tasks> <random_seed>
 ```
 
 Replace `<num_of_tasks>` with the desired number of tasks to be processed. Optionally, you can provide a `<random_seed>` for the random number generator.
