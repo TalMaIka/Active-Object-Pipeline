@@ -43,8 +43,4 @@ The active objects perform specific operations on the numbers, including prime n
 
 The program terminates when all tasks have been processed by the active objects.
 
-## License
-
-This project is licensed under the [MIT License](LICENSE).
-
 ![Project GIF](Ex5.gif)
