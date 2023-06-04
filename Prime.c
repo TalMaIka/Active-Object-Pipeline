@@ -1,18 +1,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "Prime.h"
 
-int isPrime(unsigned int n) {
-    unsigned int i;
-    if (n < 2) return 0;
-    if(n == 2) return 1;
-    if(n % 2 == 0) return 0;
-    int j = 1;
-    for (i = 2; i <= sqrt(n); i+=(2*j+1)) {
-        if (n % i == 0){
-            return 0;
-        } 
-        j++;
+int isPrime(int num) {
+    if (num <= 1) return 0;
+    if (num <= 3) return 1;
+    if (num % 2 == 0 || num % 3 == 0) return 0;
+    for (int i = 5; i * i <= num; i += 6) {
+        if (num % i == 0 || num % (i + 2) == 0) return 0;
     }
     return 1;
+}
+
+void isPrimeAdapter(void* arg) {
+    int* num = (int*)arg;
+    int result = isPrime(*num);
+    printf("%d is %s\n", *num, result ? "prime" : "not prime");
+    free(num);
 }
